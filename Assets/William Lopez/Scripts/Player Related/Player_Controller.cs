@@ -33,10 +33,13 @@ public class Player_Controller : MonoBehaviour
     private bool allowClimbing = false; // Checks if the player can climb a wall
     private bool underObject = false; // Checks if the player is under an object while crouched
     private bool hidingAvailible = false; // Checks if the player is in a location that allows them to hide
+    private bool playerHiding = false; // Checks if the player is currently hiding
     private bool caughtInLight = false; // Checks if the player is currently in a light source
+    private bool respawnPlayer = false; // Checks if the player needs to be returned to a checkpoint
 
     // Component
     public Rigidbody rBody; // Allows access to the player's Rigidbody
+    public Transform respawnPoint; // Sets location of where to bring player when respawning
 
     private void Start()
     {
@@ -151,12 +154,12 @@ public class Player_Controller : MonoBehaviour
         }
 
         // Handles player crouching
-        if (Input.GetKey(KeyCode.S) && hasJumpedFromWall && onGround|| Input.GetKey(KeyCode.DownArrow) && hasJumpedFromWall && onGround)
+        if (Input.GetKey(KeyCode.S) && onGround && !playerHiding|| Input.GetKey(KeyCode.DownArrow) && onGround && !playerHiding)
         {
             // Turns off the mesh and colliders for the current game object and turns on a half sized block
             Debug.Log("Key S or Down Arrow is being pressed.");
-            this.gameObject.GetComponent<Renderer>().enabled = false;
-            this.gameObject.GetComponent<BoxCollider>().enabled = false;
+            gameObject.GetComponent<Renderer>().enabled = false;
+            gameObject.GetComponent<BoxCollider>().enabled = false;
             crouchedPlayer.GetComponent<Renderer>().enabled = true;
             crouchedPlayer.GetComponent<BoxCollider>().enabled = true;
             playerCrouched = true;
@@ -175,6 +178,14 @@ public class Player_Controller : MonoBehaviour
         if (Input.GetKey(KeyCode.E) && hidingAvailible)
         {
             Debug.Log("Key E is being pressed.");
+            playerHiding = true;
+            this.gameObject.GetComponent<Renderer>().enabled = false;
+        }
+        else if (playerHiding && !hidingAvailible)
+        {
+            Debug.Log("Key E is being released.");
+            playerHiding = false;
+            this.gameObject.GetComponent<Renderer>().enabled = true;
         }
 
         // Checks for environmental triggers for various jumping elements
@@ -205,17 +216,38 @@ public class Player_Controller : MonoBehaviour
             wallRight = false;
         }
 
+        // Checks for ceiling to uncrouch player
+        if (GameObject.Find("Ceiling_Check").GetComponent<Ceiling_Check_Script>().Ceiling)
+        {
+            underObject = true;
+        }
+        else
+        {
+            underObject = false;
+        }
+
         if (caughtInLight)
         {
             timer = Time.deltaTime;
             if (timer <= lightDeathTimer)
             {
                 //Code for particle effects and opacity changes
+                return;
             }
             else if (timer >= lightDeathTimer)
             {
                 //Code for death animation into spawn animation at the last checkpoint
+
             }
+        }
+
+        if (respawnPlayer)
+        {
+            respawnPlayer = false;
+            curPlayerSpd = 0;
+            rBody.velocity = Vector3.zero;
+            rBody.angularVelocity = Vector3.zero;
+            this.transform.position = respawnPoint.position;
         }
 
     }
@@ -237,6 +269,14 @@ public class Player_Controller : MonoBehaviour
         else if (other.tag == "Enemy")
         {
             return;
+        }
+        else if (other.tag == "Checkpoint")
+        {
+            respawnPoint.position = other.transform.position;
+        }
+        else if (other.tag == "Deathzone")
+        {
+            respawnPlayer = true;
         }
     }
 
