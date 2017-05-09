@@ -1,4 +1,10 @@
-﻿using System.Collections;
+﻿/* 
+Project Noct's code is availible to review aand gather ideas from however many not use to build a game from.
+
+-William Lopez
+*/
+
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
